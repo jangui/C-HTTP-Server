@@ -1,21 +1,26 @@
-#include <stdio.h>        // printf, perror
-#include <unistd.h>       // close
-#include <stdlib.h>       // exit
-#include <errno.h>        // errno
-#include <string.h>       // memset
-#include <netinet/in.h>   // servaddr, INADDR_ANY, htons, htonl
-#include <sys/socket.h>   // socket, bind, listen, accpet, AF_INET
-                          // SOCK_STREAM, send
+#include <stdio.h>          // printf, perror
+#include <unistd.h>         // close
+#include <stdlib.h>         // exit
+#include <errno.h>          // errno
+#include <string.h>         // memset
+#include <netinet/in.h>     // servaddr, INADDR_ANY, htons, htonl
+#include <sys/socket.h>     // socket, bind, listen, accpet, AF_INET
+                            // SOCK_STREAM, send
+#include "signalHandling.h" // setupSignalHandler
 
 #define LISTENQ 10        // max size for connection queue
-#define DEBUG 1           // debug flag
 
-// debug macro
+#ifndef DEBUG
+  #define DEBUG 0
+#endif
+
 #define DBGMSG(msg) if (DEBUG) { printf(msg "\n"); }
+
+// globals needed by signal handler
+int socketfd;
 
 int setupServer(int port)  {
   // create socket
-  int socketfd;
   if ((socketfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     perror("error creating socket");
     exit(errno);
@@ -63,7 +68,8 @@ void processConnection(int connfd) {
 
 int main(int argc, char *argv[]) {
   int port = 8080;
-  int socketfd = setupServer(port);
+  setupSignalHandling();
+  setupServer(port);
 
   // wait for connections and process
   int connfd;
